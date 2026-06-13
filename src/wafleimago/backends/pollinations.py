@@ -1,6 +1,7 @@
 """Pollinations backend — free, no-auth image generation."""
 
 import time
+import urllib.error
 import urllib.request
 import urllib.parse
 import os
@@ -11,6 +12,7 @@ from .base import BaseBackend, GenerationResult, BACKENDS
 
 
 ANON_BASE = "https://pollinations.ai/p/"
+ANON_FALLBACK = "https://image.pollinations.ai/prompt/"
 PRO_BASE = "https://gen.pollinations.ai"
 
 
@@ -18,11 +20,35 @@ class PollinationsBackend(BaseBackend):
     name = "pollinations"
     priority = 0
 
-    def _fetch_anon(self, prompt: str) -> bytes:
-        url = ANON_BASE + urllib.parse.quote(prompt)
-        req = urllib.request.Request(url, headers={"User-Agent": "WafleImago/0.1"})
-        with urllib.request.urlopen(req, timeout=60) as r:
-            return r.read()
+    def _fetch_anon(self, prompt: str, retries: int = 2, url_base: str = "") -> bytes:
+        base = url_base or ANON_BASE
+        url = base + urllib.parse.quote(prompt)
+        last_err = ""
+        for attempt in range(1, retries + 2):
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "WafleImago/0.1"})
+                with urllib.request.urlopen(req, timeout=60) as r:
+                    ct = (r.headers.get("Content-Type") or "").lower()
+                    data = r.read()
+                if ct and "text/html" in ct:
+                    last_err = "Pollinations returned HTML instead of image (rate limit / captcha)"
+                    time.sleep(1.5)
+                    continue
+                if data[:4] == b"\x89PNG" or data[:2] in (b"\xff\xd8", b"BM"):
+                    return data
+                html_indicators = [b"<!DOCTYPE html", b"<html", b"<script"]
+                if any(ind in data[:500].lower() for ind in [b"<!doctype html", b"<html", b"<script"]):
+                    last_err = "Response is HTML, not an image (Pollinations may be rate-limiting)"
+                    time.sleep(1.5)
+                    continue
+                return data
+            except urllib.error.HTTPError as e:
+                last_err = f"HTTP {e.code}: {e.reason[:100]}"
+                time.sleep(2 ** attempt)
+            except Exception as e:
+                last_err = str(e)[:200]
+                time.sleep(2 ** attempt)
+        raise RuntimeError(f"Anonymous Pollinations failed after {retries + 1} attempts: {last_err}")
 
     def _fetch_pro(self, prompt: str, model: str, **kwargs: Any) -> bytes:
         token = self._get_token()
@@ -72,10 +98,21 @@ class PollinationsBackend(BaseBackend):
             if token and model:
                 data = self._fetch_pro(prompt, model, **kwargs)
             else:
-                data = self._fetch_anon(prompt)
+                try:
+                    data = self._fetch_anon(prompt)
+                except Exception:
+                    if ANON_FALLBACK:
+                        data = self._fetch_anon(prompt, url_base=ANON_FALLBACK)
 
             elapsed = round(time.time() - t0, 1)
-            fmt = "image/png" if data[:4] == b"\x89PNG" else "image/jpeg"
+            if data[:4] == b"\x89PNG":
+                fmt = "image/png"
+            elif data[:2] in (b"\xff\xd8",):
+                fmt = "image/jpeg"
+            elif data[:2] == b"BM":
+                fmt = "image/bmp"
+            else:
+                fmt = "image/png"
             return GenerationResult(
                 success=True, data=data, format=fmt,
                 time_seconds=elapsed, model=model or "zimage", attempts=1,
