@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wafle-imago"
-version = "0.2.0"
+version = "0.2.1"
 description = "Wafle-Imago — universal MCP server for AI image generation. Free via Cloudflare Workers AI or NVIDIA NIM."
 readme = "README.md"
 license = {text = "MIT"}
