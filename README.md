@@ -8,46 +8,49 @@ Wafle-Imago turns words into images. A universal MCP server that works with **an
 
 ```bash
 pip install wafle-imago
-wafle-imago
+wafle-imago --backend cloudflare
 ```
 
-That's it. No API key, no registration, no configuration. Generates images in ~0.5s.
+Requires Cloudflare or NVIDIA credentials in `.env` (see [Configuration](#configuration)).
 
 ## Backends
 
-| Backend | Images | Video | Audio | Auth Required | Cost |
-|---------|--------|-------|-------|---------------|------|
-| **pollinations** (anonymous) | ✅ | ❌ | ❌ | No | **$0, unlimited, no rate limit** |
-| **pollinations** (with key) | ✅ | ✅ | ✅ | `POLLINATIONS_API_KEY` | From ~$0.001/gen |
-| **hf** | ✅ | ❌ | ❌ | `HF_TOKEN` | $0 (rate-limited) |
+| Backend | Images | Cost | Auth | Limits |
+|---------|--------|------|------|--------|
+| **cloudflare** ✅ | FLUX.1 Schnell, SDXL, FLUX.2 Klein | **$0** | `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` | 10k neurons/day (~900 images) |
+| **nvidia** ✅ | FLUX.1 Dev/Schnell, FLUX.2 Klein | **$0** | `NVIDIA_API_KEY` | 1k req/month |
+| pollinations | ❌ Deprecated (HTTP 402) | — | — | — |
+| hf | ⚠️ Credits depleted (resets monthly) | $0 | `HF_TOKEN` | Rate-limited |
 
 ## Configuration
 
-### OpenCode / Claude Desktop / Cursor
+### 1. Get Free Credentials
 
-Add to your MCP client config:
-
-```json
-{
-  "mcpServers": {
-    "wafle-imago": {
-      "command": "wafle-imago",
-      "description": "AI image generation — free, no auth, unlimited"
-    }
-  }
-}
+**Cloudflare Workers AI** (recommended — 900 images/day free):
+1. Sign up at https://dash.cloudflare.com/sign-up/workers-and-pages (no credit card)
+2. Go to Workers AI → "Use REST API" → copy Account ID + create API Token
+3. Add to `.env`:
+```bash
+CLOUDFLARE_ACCOUNT_ID=your_account_id
+CLOUDFLARE_API_TOKEN=your_api_token
 ```
 
-With API key for video/audio:
+**NVIDIA NIM** (alternative — 1k req/month):
+1. Sign up at https://build.nvidia.com (no credit card)
+2. Get API key
+3. Add to `.env`:
+```bash
+NVIDIA_API_KEY=nvapi-...
+```
+
+### 2. Add to MCP Client
 
 ```json
 {
   "mcpServers": {
     "wafle-imago": {
-      "command": "wafle-imago",
-      "env": {
-        "POLLINATIONS_API_KEY": "sk_your_key_here"
-      }
+      "command": ["wafle-imago", "--backend", "cloudflare"],
+      "description": "AI image generation via Cloudflare Workers AI (free)"
     }
   }
 }
@@ -56,20 +59,21 @@ With API key for video/audio:
 ### CLI Options
 
 ```bash
-wafle-imago                    # MCP stdio mode (default for agents)
-wafle-imago --http --port 8000 # HTTP SSE mode
-wafle-imago --backend hf       # Use HuggingFace backend
-wafle-imago --version          # Show version
+wafle-imago                          # MCP stdio mode (default: cloudflare)
+wafle-imago --backend nvidia          # Use NVIDIA NIM backend
+wafle-imago --http --port 8000       # HTTP SSE mode
+wafle-imago --backend cloudflare     # Cloudflare Workers AI
+wafle-imago --version                # Show version
 ```
 
 ## MCP Tools
 
 | Tool | Description |
 |------|-------------|
-| `generate_image` | Generate image from text. Free, no auth needed |
-| `generate_video` | Generate video (requires API key) |
+| `generate_image` | Generate image from text prompt |
+| `generate_video` | ❌ Not available on free backends |
 | `list_models` | Available models with pricing |
-| `get_balance` | Check auth status / mode |
+| `get_balance` | Check auth status / backend mode |
 
 ## Security
 
@@ -82,6 +86,7 @@ wafle-imago --version          # Show version
 
 - Python 3.10+
 - Windows, macOS, Linux
+- One free Cloudflare or NVIDIA account
 
 ## Installation from Source
 
@@ -94,7 +99,3 @@ pip install -e .
 ## License
 
 MIT
-
-## Etymology
-
-*Imago* (Latin) — image, likeness, representation. The root of "imagine", "imagery", and "imitation". From *imitari* (to copy, to represent). Wafle-Imago: the WAFLE ecosystem's engine for turning language into visual form.
