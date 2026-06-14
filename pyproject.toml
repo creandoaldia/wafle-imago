@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "wafle-imago"
-version = "0.1.0"
-description = "Wafle-Imago — universal MCP server for AI image generation. Free, no-auth, unlimited images."
+version = "0.2.0"
+description = "Wafle-Imago — universal MCP server for AI image generation. Free via Cloudflare Workers AI or NVIDIA NIM."
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
     {name = "WAFLE"},
 ]
 requires-python = ">=3.10"
-keywords = ["mcp", "image-generation", "ai", "wafle", "imago", "pollinations"]
+keywords = ["mcp", "image-generation", "ai", "wafle", "imago", "cloudflare", "nvidia", "flux"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
