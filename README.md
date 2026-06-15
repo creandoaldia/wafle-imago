@@ -1,3 +1,12 @@
+```
+██╗    ██╗  █████╗  ███████╗██╗     ███████╗
+██║    ██║ ██╔══██╗ ██╔════╝██║     ██╔════╝
+██║ █╗ ██║ ███████║ █████╗  ██║     █████╗
+██║███╗██║ ██╔══██║ ██╔══╝  ██║     ██╔══╝
+╚███╔███╔╝ ██║  ██║ ██║     ███████╗███████║
+ ╚══╝╚══╝  ╚═╝  ╚═╝ ╚═╝     ╚══════╝╚══════╝
+```
+
 # Wafle-Imago — Universal MCP Server for AI Image Generation
 
 **Imago** (Latin: *image, likeness, representation*). From the root of "imagine" and "imagery".
