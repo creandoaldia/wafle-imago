@@ -97,6 +97,19 @@ wafle-imago --version                # Show version
 - Windows, macOS, Linux
 - One free Cloudflare or NVIDIA account
 
+## Dependencies
+
+Standalone — no other MCP servers required.
+
+## Known Issues
+
+| Issue | Detail | Status |
+|-------|--------|--------|
+| **Pollinations backend dead** | Anonymous Pollinations returns HTTP 402. Backend marked as deprecated. | ❌ Removed in next version |
+| **HuggingFace credits depleted** | HF backend resets monthly but often runs out of quota mid-cycle. | ⚠️ Intermittent |
+| **Prompt safety false positives** | `BLOCKED_PATTERNS` in validator.py matches substrings (e.g. "violencia" blocks the whole word). | 🟡 Low priority |
+| **Env vars read on every call** | API keys read from `.env` on each request — no caching. Fine for CLI, slight overhead in tight loops. | 🟡 Cosmetic |
+
 ## Installation from Source
 
 ```bash
